@@ -2,301 +2,330 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Troxus Telegram Mini App</title>
-    
-    <!-- Telegram Web App SDK -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Troxus Platform</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-    <!-- Embedded CSS Styling -->
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --accent: #38bdf8;
-            --text-color: #f8fafc;
-            --subtext: #94a3b8;
-            --border-color: #334155;
+            --bg: #090d16;
+            --card: #131b2e;
+            --accent: #0098ea;
+            --accent-hover: #0081c9;
+            --text: #ffffff;
+            --subtext: #8292aa;
+            --border: #1e293b;
+            --green: #10b981;
+            --red: #ef4444;
         }
 
-        body {
-            margin: 0;
-            padding: 16px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg); color: var(--text); padding-bottom: 80px; }
 
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            background: var(--card-bg);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
+        /* Header */
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--card); border-bottom: 1px solid var(--border); }
+        .user-box { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .admin-badge { font-size: 0.7rem; background: var(--red); color: white; padding: 2px 6px; border-radius: 4px; display: none; }
 
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        /* Navigation Views */
+        .view { display: none; padding: 16px; flex-direction: column; gap: 14px; }
+        .view.active { display: flex; }
 
-        .user-avatar {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            background: var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #0f172a;
-            font-size: 1.2rem;
-        }
+        /* Cards & Components */
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+        .balance-card { background: linear-gradient(135deg, #0098ea, #0052d4); color: white; text-align: center; padding: 20px; border-radius: 16px; }
+        .balance-amount { font-size: 2.2rem; font-weight: 800; margin: 6px 0; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-val { font-size: 1.1rem; font-weight: bold; color: var(--accent); margin-top: 4px; }
 
-        .balance-card {
-            background: linear-gradient(135deg, #0284c7, #2563eb);
-            padding: 24px;
-            border-radius: 16px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-        }
+        /* Inputs & Buttons */
+        label { font-size: 0.8rem; color: var(--subtext); margin-bottom: 4px; display: block; }
+        input, select { width: 100%; padding: 12px; background: #0b111e; border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 0.95rem; margin-bottom: 10px; outline: none; }
+        button { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; }
+        button.danger { background: var(--red); }
 
-        .balance-title {
-            font-size: 0.9rem;
-            opacity: 0.85;
-            margin-bottom: 6px;
-        }
+        /* Bottom Navigation Bar */
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; color: var(--subtext); cursor: pointer; background: none; border: none; width: auto; padding: 4px; }
+        .nav-item.active { color: var(--accent); font-weight: bold; }
 
-        .balance-amount {
-            font-size: 2.5rem;
-            font-weight: 800;
-        }
-
-        .nav-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-
-        .card {
-            background: var(--card-bg);
-            padding: 16px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-
-        .card-title {
-            font-size: 0.85rem;
-            color: var(--subtext);
-            margin-bottom: 6px;
-        }
-
-        .card-value {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: var(--accent);
-        }
-
-        .actions {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background: #0f172a;
-            color: #fff;
-            box-sizing: border-box;
-            font-size: 0.95rem;
-        }
-
-        button {
-            background: var(--accent);
-            color: #0f172a;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 0.95rem;
-            cursor: pointer;
-            width: 100%;
-            transition: background 0.2s ease;
-        }
-
-        button:active {
-            opacity: 0.85;
-        }
-
-        .setup-guide {
-            margin-top: 20px;
-            background: #00000040;
-            border: 1px dashed var(--accent);
-            padding: 16px;
-            border-radius: 12px;
-            font-size: 0.85rem;
-        }
-
-        code {
-            background: #1e293b;
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: var(--accent);
-        }
+        /* P2P Orders & Lists */
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .list-item:last-child { border-bottom: none; }
+        .tx-type { font-weight: bold; }
+        .tx-plus { color: var(--green); }
+        .tx-minus { color: var(--red); }
     </style>
 </head>
 <body>
 
     <!-- App Header -->
     <div class="header">
-        <div class="user-info">
-            <div class="user-avatar" id="avatar">T</div>
+        <div class="user-box">
+            <div class="avatar" id="u-avatar">U</div>
             <div>
-                <div style="font-weight: bold;" id="username">Guest User</div>
-                <div style="font-size: 0.75rem; color: var(--subtext);" id="telegram-id">ID: 0000000</div>
+                <div style="font-weight: bold; font-size: 0.95rem;" id="u-name">Loading...</div>
+                <div style="font-size: 0.75rem; color: var(--subtext);" id="u-id">ID: ---</div>
+            </div>
+        </div>
+        <span class="admin-badge" id="admin-indicator">ADMIN</span>
+    </div>
+
+    <!-- VIEW 1: DASHBOARD -->
+    <div id="view-dashboard" class="view active">
+        <div class="balance-card">
+            <div style="font-size: 0.85rem; opacity: 0.9;">Main Wallet Balance</div>
+            <div class="balance-amount">$<span id="val-balance">0.00</span></div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div style="font-size: 0.8rem; color: var(--subtext);">Staked Tokens</div>
+                <div class="stat-val">$<span id="val-staked">0.00</span></div>
+            </div>
+            <div class="card">
+                <div style="font-size: 0.8rem; color: var(--subtext);">Referrals</div>
+                <div class="stat-val"><span id="val-ref">0</span> Active</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h4 style="margin-bottom: 10px;">💸 Transfer Funds</h4>
+            <label>Recipient Account ID / Username</label>
+            <input type="text" id="tx-recipient" placeholder="e.g. 8472036561 or @username">
+            <label>Amount ($)</label>
+            <input type="number" id="tx-amount" placeholder="0.00">
+            <button onclick="executeTransfer()">Send Funds</button>
+        </div>
+    </div>
+
+    <!-- VIEW 2: STAKING VAULT -->
+    <div id="view-staking" class="view">
+        <div class="card">
+            <h3>📈 Fixed Yield Staking</h3>
+            <p style="font-size: 0.8rem; color: var(--subtext); margin: 6px 0 14px 0;">Lock funds to earn daily compounding yields.</p>
+            
+            <label>Amount to Stake ($)</label>
+            <input type="number" id="stake-amount" placeholder="0.00">
+
+            <label>Select Lock Period</label>
+            <select id="stake-period">
+                <option value="30|5">30 Days (5% APY)</option>
+                <option value="90|12">90 Days (12% APY)</option>
+                <option value="180|25">180 Days (25% APY)</option>
+            </select>
+
+            <button onclick="executeStake()">Confirm Staking</button>
+        </div>
+
+        <div class="card">
+            <h4>Active Staking Contracts</h4>
+            <div id="active-stakes-list" style="margin-top: 10px;"></div>
+        </div>
+    </div>
+
+    <!-- VIEW 3: P2P MARKETPLACE -->
+    <div id="view-p2p" class="view">
+        <div class="card">
+            <h3>🛒 P2P Trading Desk</h3>
+            <p style="font-size: 0.8rem; color: var(--subtext); margin-top: 4px;">Buy or sell tokens using local payment channels.</p>
+        </div>
+
+        <div class="card">
+            <h4>Open Orders</h4>
+            <div class="list-item">
+                <div>
+                    <div><strong>Sell TRX</strong> (Merchant: Alex)</div>
+                    <div style="color: var(--subtext); font-size: 0.75rem;">Limit: $10 - $500</div>
+                </div>
+                <button style="width: auto; padding: 6px 12px;" onclick="alert('P2P order created. Awaiting merchant release.')">Buy TRX</button>
+            </div>
+            <div class="list-item">
+                <div>
+                    <div><strong>Buy TRX</strong> (Merchant: Sarah)</div>
+                    <div style="color: var(--subtext); font-size: 0.75rem;">Limit: $50 - $1,000</div>
+                </div>
+                <button style="width: auto; padding: 6px 12px; background: var(--green);" onclick="alert('Sell request sent to Escrow.')">Sell TRX</button>
             </div>
         </div>
     </div>
 
-    <!-- Main Balance Card -->
-    <div class="balance-card">
-        <div class="balance-title">🚀 Troxus Main Balance</div>
-        <div class="balance-amount">$<span id="balance">0.00</span></div>
-    </div>
-
-    <!-- Quick Metrics Grid -->
-    <div class="nav-grid">
+    <!-- VIEW 4: HISTORY -->
+    <div id="view-history" class="view">
         <div class="card">
-            <div class="card-title">📈 Staked Balance</div>
-            <div class="card-value">$<span id="staked-amount">0.00</span></div>
+            <h3>📊 Transaction History</h3>
+            <div id="history-list" style="margin-top: 10px;"></div>
         </div>
+    </div>
+
+    <!-- VIEW 5: ADMIN PANEL (Protected) -->
+    <div id="view-admin" class="view">
         <div class="card">
-            <div class="card-title">🤝 Referrals</div>
-            <div class="card-value"><span id="referral-count">0</span> Users</div>
+            <h3 style="color: var(--red);">⚙️ Super Admin Controls</h3>
+            <p style="font-size: 0.8rem; color: var(--subtext); margin-bottom: 12px;">Modify user system records directly.</p>
+            
+            <label>Inject Balance ($)</label>
+            <input type="number" id="admin-balance-input" placeholder="Set custom balance">
+            <button class="danger" onclick="adminSetBalance()">Update User Balance</button>
         </div>
     </div>
 
-    <!-- Interactive Actions (Using LocalStorage) -->
-    <div class="card">
-        <div class="card-title">💸 Fast Transfer</div>
-        <div class="actions">
-            <input type="number" id="transfer-amount" placeholder="Amount ($)" />
-            <button onclick="handleTransfer()">Send Funds</button>
-        </div>
+    <!-- Bottom Navigation Bar -->
+    <div class="nav-bar">
+        <button class="nav-item active" onclick="switchTab('dashboard', this)">🏠<span>Dashboard</span></button>
+        <button class="nav-item" onclick="switchTab('staking', this)">📈<span>Staking</span></button>
+        <button class="nav-item" onclick="switchTab('p2p', this)">🛒<span>P2P</span></button>
+        <button class="nav-item" onclick="switchTab('history', this)">📊<span>History</span></button>
+        <button class="nav-item" id="nav-admin-btn" style="display:none;" onclick="switchTab('admin', this)">⚙️<span>Admin</span></button>
     </div>
 
-    <div class="card">
-        <div class="card-title">📈 Staking Vault</div>
-        <div class="actions">
-            <input type="number" id="stake-input" placeholder="Amount to Stake ($)" />
-            <button onclick="handleStake()">Stake Tokens</button>
-        </div>
-    </div>
-
-    <!-- Inline Setup Steps & Bot Python Script -->
-    <div class="setup-guide">
-        <h4 style="margin: 0 0 8px 0; color: var(--accent);">🛠️ Quick Setup Steps</h4>
-        <ol style="margin: 0; padding-left: 20px; color: var(--subtext);">
-            <li>Host this single <code>index.html</code> file on GitHub Pages, Vercel, or Netlify.</li>
-            <li>Copy your live HTTPS URL.</li>
-            <li>Use the Python code inside the script below or set up your Telegram Bot menu using BotFather.</li>
-        </ol>
-    </div>
-
-    <!-- Embedded JavaScript Code -->
+    <!-- APP ENGINE SCRIPT -->
     <script>
-        // 1. Initialize Telegram WebApp SDK
         const tg = window.Telegram?.WebApp;
-        if (tg) {
-            tg.ready();
-            tg.expand();
+        if (tg) { tg.ready(); tg.expand(); }
+
+        // Telegram Profile Sync
+        const user = tg?.initDataUnsafe?.user || { id: 8472036561, first_name: "Ayalew", last_name: "Abebe" };
+        
+        // Define Admin Telegram IDs here
+        const ADMIN_IDS = [8472036561]; 
+
+        document.getElementById('u-name').innerText = `${user.first_name} ${user.last_name || ''}`;
+        document.getElementById('u-id').innerText = `ID: ${user.id}`;
+        document.getElementById('u-avatar').innerText = user.first_name.charAt(0).toUpperCase();
+
+        // Admin Access Setup
+        if (ADMIN_IDS.includes(user.id)) {
+            document.getElementById('admin-indicator').style.display = 'inline-block';
+            document.getElementById('nav-admin-btn').style.display = 'flex';
         }
 
-        // 2. Obtain Telegram Profile Info or Fallback to Local Mock Data
-        const user = tg?.initDataUnsafe?.user || { id: 999999, first_name: "Local", last_name: "Tester" };
-
-        document.getElementById('username').innerText = `${user.first_name} ${user.last_name || ''}`;
-        document.getElementById('telegram-id').innerText = `ID: ${user.id}`;
-        document.getElementById('avatar').innerText = user.first_name.charAt(0).toUpperCase();
-
-        // 3. LocalStorage Persistence Layer
-        const STORAGE_KEY = `troxus_db_${user.id}`;
+        // Local Storage System
+        const DB_KEY = `troxus_db_v2_${user.id}`;
 
         function getDB() {
-            const data = localStorage.getItem(STORAGE_KEY);
+            const data = localStorage.getItem(DB_KEY);
             if (!data) {
-                const initialData = { balance: 1000.00, staked: 150.00, referrals: 5 };
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
-                return initialData;
+                const init = { balance: 250.00, staked: 0.00, referrals: 5, stakes: [], history: [] };
+                localStorage.setItem(DB_KEY, JSON.stringify(init));
+                return init;
             }
             return JSON.parse(data);
         }
 
-        function saveDB(data) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        function saveDB(db) {
+            localStorage.setItem(DB_KEY, JSON.stringify(db));
             render();
         }
 
         function render() {
             const db = getDB();
-            document.getElementById('balance').innerText = db.balance.toFixed(2);
-            document.getElementById('staked-amount').innerText = db.staked.toFixed(2);
-            document.getElementById('referral-count').innerText = db.referrals;
+            document.getElementById('val-balance').innerText = db.balance.toFixed(2);
+            document.getElementById('val-staked').innerText = db.staked.toFixed(2);
+            document.getElementById('val-ref').innerText = db.referrals;
+
+            // Render Stakes List
+            const stakesContainer = document.getElementById('active-stakes-list');
+            if (db.stakes.length === 0) {
+                stakesContainer.innerHTML = '<div style="font-size:0.8rem; color:var(--subtext);">No active staking contracts.</div>';
+            } else {
+                stakesContainer.innerHTML = db.stakes.map(s => `
+                    <div class="list-item">
+                        <div>
+                            <div><strong>$${s.amount.toFixed(2)}</strong> (${s.yield}% APY)</div>
+                            <div style="font-size:0.75rem; color:var(--subtext);">${s.days} Days Lock • Ends: ${s.endDate}</div>
+                        </div>
+                        <span style="color:var(--green); font-size:0.8rem;">Active</span>
+                    </div>
+                `).join('');
+            }
+
+            // Render History
+            const historyContainer = document.getElementById('history-list');
+            if (db.history.length === 0) {
+                historyContainer.innerHTML = '<div style="font-size:0.8rem; color:var(--subtext);">No transactions recorded.</div>';
+            } else {
+                historyContainer.innerHTML = db.history.map(h => `
+                    <div class="list-item">
+                        <div>
+                            <div class="tx-type">${h.type}</div>
+                            <div style="font-size:0.75rem; color:var(--subtext);">${h.detail}</div>
+                        </div>
+                        <div class="${h.amount >= 0 ? 'tx-plus' : 'tx-minus'}">
+                            ${h.amount >= 0 ? '+' : ''}$${Math.abs(h.amount).toFixed(2)}
+                        </div>
+                    </div>
+                `).join('');
+            }
         }
 
-        function handleTransfer() {
-            const input = document.getElementById('transfer-amount');
-            const amount = parseFloat(input.value);
+        // Tab Navigation Switcher
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(`view-${tabId}`).classList.add('active');
+            el.classList.add('active');
+        }
+
+        // Functional Logic: Transfers
+        function executeTransfer() {
+            const recipient = document.getElementById('tx-recipient').value.trim();
+            const amount = parseFloat(document.getElementById('tx-amount').value);
             const db = getDB();
 
-            if (isNaN(amount) || amount <= 0) {
-                alert("Please enter a valid amount.");
-                return;
-            }
-            if (amount > db.balance) {
-                alert("Insufficient wallet balance.");
-                return;
-            }
+            if (!recipient) { alert('Enter recipient ID or username.'); return; }
+            if (isNaN(amount) || amount <= 0) { alert('Enter a valid transfer amount.'); return; }
+            if (amount > db.balance) { alert('Insufficient wallet balance.'); return; }
 
             db.balance -= amount;
+            db.history.unshift({ type: 'Transfer Sent', amount: -amount, detail: `To: ${recipient}` });
             saveDB(db);
-            input.value = '';
-            alert(`Transferred $${amount.toFixed(2)} successfully!`);
+
+            document.getElementById('tx-recipient').value = '';
+            document.getElementById('tx-amount').value = '';
+            alert(`Sent $${amount.toFixed(2)} to ${recipient}`);
         }
 
-        function handleStake() {
-            const input = document.getElementById('stake-input');
-            const amount = parseFloat(input.value);
+        // Functional Logic: Staking
+        function executeStake() {
+            const amount = parseFloat(document.getElementById('stake-amount').value);
+            const [days, yieldVal] = document.getElementById('stake-period').value.split('|');
             const db = getDB();
 
-            if (isNaN(amount) || amount <= 0) {
-                alert("Please enter a valid staking amount.");
-                return;
-            }
-            if (amount > db.balance) {
-                alert("Insufficient balance to stake.");
-                return;
-            }
+            if (isNaN(amount) || amount <= 0) { alert('Enter a valid staking amount.'); return; }
+            if (amount > db.balance) { alert('Insufficient balance.'); return; }
+
+            const expiry = new Date();
+            expiry.setDate(expiry.getDate() + parseInt(days));
 
             db.balance -= amount;
             db.staked += amount;
+            db.stakes.push({
+                amount: amount,
+                days: days,
+                yield: yieldVal,
+                endDate: expiry.toLocaleDateString()
+            });
+            db.history.unshift({ type: 'Staking Locked', amount: -amount, detail: `${days} Days @ ${yieldVal}% APY` });
+            
             saveDB(db);
-            input.value = '';
-            alert(`Staked $${amount.toFixed(2)} successfully!`);
+            document.getElementById('stake-amount').value = '';
+            alert(`Staked $${amount.toFixed(2)} for ${days} days!`);
         }
 
-        // Render on initial page load
+        // Admin Function
+        function adminSetBalance() {
+            const val = parseFloat(document.getElementById('admin-balance-input').value);
+            if (isNaN(val)) return;
+            const db = getDB();
+            db.balance = val;
+            db.history.unshift({ type: 'Admin Adjustment', amount: val, detail: 'Manual Override' });
+            saveDB(db);
+            alert(`Balance updated to $${val.toFixed(2)}`);
+        }
+
+        // Initial Paint
         render();
     </script>
 </body>
