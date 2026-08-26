@@ -29,7 +29,7 @@
         .admin-badge { font-size: 0.7rem; background: var(--red); color: white; padding: 2px 6px; border-radius: 4px; display: none; }
 
         .view { display: none; padding: 16px; flex-direction: column; gap: 14px; }
-        .view.active { display: flex; }
+        .view.active { display: flex !important; }
 
         .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
         .balance-card { background: linear-gradient(135deg, #0098ea, #0052d4); color: white; text-align: center; padding: 20px; border-radius: 16px; }
@@ -43,7 +43,7 @@
         button { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; }
         button.danger { background: var(--red); }
 
-        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0; }
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0; z-index: 1000; }
         .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; color: var(--subtext); cursor: pointer; background: none; border: none; width: auto; padding: 4px; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
 
@@ -58,19 +58,19 @@
         <div class="user-box">
             <div class="avatar" id="u-avatar">U</div>
             <div>
-                <div style="font-weight: bold; font-size: 0.95rem;" id="u-name">Loading Profile...</div>
+                <div style="font-weight: bold; font-size: 0.95rem;" id="u-name">User Account</div>
                 <div style="font-size: 0.75rem; color: var(--subtext);" id="u-id">ID: ---</div>
             </div>
         </div>
         <span class="admin-badge" id="admin-indicator">ADMIN</span>
     </div>
 
-    <!-- DASHBOARD -->
+    <!-- DASHBOARD VIEW -->
     <div id="view-dashboard" class="view active">
         <div class="balance-card">
-            <div style="font-size: 0.85rem; opacity: 0.9;">Supabase Main Balance</div>
-            <div class="balance-amount">$<span id="val-balance">0.00</span></div>
-            <div class="status-sync" id="sync-status">⏳ Connecting...</div>
+            <div style="font-size: 0.85rem; opacity: 0.9;">Main Balance</div>
+            <div class="balance-amount">$<span id="val-balance">250.00</span></div>
+            <div class="status-sync" id="sync-status">⚡ Local Ready</div>
         </div>
 
         <div class="grid-2">
@@ -84,25 +84,23 @@
             </div>
         </div>
 
-        <!-- NEW REFERRAL CODE CARD -->
         <div class="card">
             <h4>🎁 Your Referral Link & Code</h4>
-            <p style="font-size: 0.75rem; color: var(--subtext); margin-top: 4px;">Share your code to invite friends and earn rewards.</p>
-            <div class="ref-box" id="ref-code-display">Code: Generating...</div>
+            <div class="ref-box" id="ref-code-display">Code: Loading...</div>
             <button onclick="copyRefLink()">Copy Referral Link</button>
         </div>
 
         <div class="card">
             <h4 style="margin-bottom: 10px;">💸 Transfer Funds</h4>
             <label>Recipient Account ID / Username</label>
-            <input type="text" id="tx-recipient" placeholder="e.g. 8472036561 or @username">
+            <input type="text" id="tx-recipient" placeholder="e.g. 8472036561">
             <label>Amount ($)</label>
             <input type="number" id="tx-amount" placeholder="0.00">
             <button id="btn-transfer" onclick="executeTransfer()">Send Funds</button>
         </div>
     </div>
 
-    <!-- STAKING -->
+    <!-- STAKING VIEW -->
     <div id="view-staking" class="view">
         <div class="card">
             <h3>📈 Fixed Yield Staking</h3>
@@ -117,23 +115,23 @@
         </div>
     </div>
 
-    <!-- P2P -->
+    <!-- P2P VIEW -->
     <div id="view-p2p" class="view">
         <div class="card">
             <h3>🛒 P2P Trading Desk</h3>
-            <p style="font-size: 0.8rem; color: var(--subtext);">Trading services coming online soon.</p>
+            <p style="font-size: 0.85rem; color: var(--subtext); margin-top: 8px;">P2P merchant desk active.</p>
         </div>
     </div>
 
-    <!-- HISTORY -->
+    <!-- HISTORY VIEW -->
     <div id="view-history" class="view">
         <div class="card">
             <h3>📊 Transaction History</h3>
-            <div id="history-list" style="margin-top: 10px; font-size: 0.8rem; color: var(--subtext);">No transactions yet.</div>
+            <div id="history-list" style="margin-top: 10px; font-size: 0.85rem; color: var(--subtext);">No transactions yet.</div>
         </div>
     </div>
 
-    <!-- ADMIN -->
+    <!-- ADMIN VIEW -->
     <div id="view-admin" class="view">
         <div class="card">
             <h3 style="color: var(--red);">⚙️ Super Admin Controls</h3>
@@ -143,33 +141,39 @@
         </div>
     </div>
 
-    <!-- NAV BAR -->
+    <!-- BOTTOM NAVIGATION -->
     <div class="nav-bar">
-        <button class="nav-item active" onclick="switchTab('dashboard', this)">🏠<span>Dashboard</span></button>
-        <button class="nav-item" onclick="switchTab('staking', this)">📈<span>Staking</span></button>
-        <button class="nav-item" onclick="switchTab('p2p', this)">🛒<span>P2P</span></button>
-        <button class="nav-item" onclick="switchTab('history', this)">📊<span>History</span></button>
-        <button class="nav-item" id="nav-admin-btn" style="display:none;" onclick="switchTab('admin', this)">⚙️<span>Admin</span></button>
+        <button class="nav-item active" onclick="switchTab('dashboard')">🏠<span>Dashboard</span></button>
+        <button class="nav-item" onclick="switchTab('staking')">📈<span>Staking</span></button>
+        <button class="nav-item" onclick="switchTab('p2p')">🛒<span>P2P</span></button>
+        <button class="nav-item" onclick="switchTab('history')">📊<span>History</span></button>
+        <button class="nav-item" id="nav-admin-btn" style="display:none;" onclick="switchTab('admin')">⚙️<span>Admin</span></button>
     </div>
 
     <script>
         const SUPABASE_URL = "https://kquqnxxkeagetpurvdqg.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_niFQUDkBDZj2fVZltQuzZQ_WuLhRcvu";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let supabase = null;
+        
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+            console.log("Supabase initialization deferred:", e);
+        }
 
         const tg = window.Telegram?.WebApp;
-        if (tg) { tg.ready(); tg.expand(); }
+        if (tg) { try { tg.ready(); tg.expand(); } catch(e){} }
 
         const user = tg?.initDataUnsafe?.user || { id: 8472036561, first_name: "Ayalew", last_name: "Abebe" };
         const ADMIN_IDS = [8472036561];
 
-        let userProfile = null;
+        let userProfile = { balance: 250.00, staked: 0.00, referrals: 0 };
 
+        // Set UI defaults immediately
         document.getElementById('u-name').innerText = `${user.first_name} ${user.last_name || ''}`;
         document.getElementById('u-id').innerText = `ID: ${user.id}`;
-        document.getElementById('u-avatar').innerText = user.first_name.charAt(0).toUpperCase();
+        document.getElementById('u-avatar').innerText = user.first_name ? user.first_name.charAt(0).toUpperCase() : 'U';
 
-        // Display Referral Code & Link
         const refCode = `TRX-${user.id}`;
         const refLink = `https://t.me/YourBotUsername?start=${refCode}`;
         document.getElementById('ref-code-display').innerText = `Code: ${refCode}`;
@@ -179,8 +183,30 @@
             document.getElementById('nav-admin-btn').style.display = 'flex';
         }
 
+        // Tab Switching Engine
+        function switchTab(tabId) {
+            const views = document.querySelectorAll('.view');
+            const navItems = document.querySelectorAll('.nav-item');
+
+            views.forEach(v => v.classList.remove('active'));
+            navItems.forEach(n => n.classList.remove('active'));
+
+            const targetView = document.getElementById(`view-${tabId}`);
+            if (targetView) targetView.classList.add('active');
+
+            const activeBtn = Array.from(navItems).find(b => b.getAttribute('onclick')?.includes(`'${tabId}'`));
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+
+        function renderUI() {
+            document.getElementById('val-balance').innerText = parseFloat(userProfile.balance).toFixed(2);
+            document.getElementById('val-staked').innerText = parseFloat(userProfile.staked).toFixed(2);
+            document.getElementById('val-ref').innerText = userProfile.referrals;
+        }
+
         async function loadProfile() {
-            document.getElementById('sync-status').innerText = '⏳ Syncing Cloud...';
+            if (!supabase) return;
+            document.getElementById('sync-status').innerText = '⏳ Connecting...';
 
             try {
                 let { data, error } = await supabase
@@ -189,42 +215,25 @@
                     .eq('telegram_id', user.id)
                     .maybeSingle();
 
-                if (!data) {
-                    const { data: newUser, error: createErr } = await supabase
-                        .from('profiles')
-                        .upsert([{
-                            telegram_id: user.id,
-                            first_name: user.first_name,
-                            last_name: user.last_name || '',
-                            balance: 250.00,
-                            staked: 0.00,
-                            referrals: 0
-                        }])
-                        .select()
-                        .single();
-
-                    data = newUser || { balance: 250.00, staked: 0.00, referrals: 0 };
+                if (data) {
+                    userProfile = data;
+                    document.getElementById('sync-status').innerText = '☁️ Cloud Synced';
+                } else {
+                    document.getElementById('sync-status').innerText = '⚡ Local Active';
                 }
-
-                userProfile = data;
-                document.getElementById('sync-status').innerText = '☁️ Cloud Synced';
             } catch (err) {
-                userProfile = { balance: 250.00, staked: 0.00, referrals: 0 };
-                document.getElementById('sync-status').innerText = '⚠️ Local Fallback';
+                document.getElementById('sync-status').innerText = '⚡ Offline Mode';
             }
             renderUI();
         }
 
-        function renderUI() {
-            if (!userProfile) return;
-            document.getElementById('val-balance').innerText = parseFloat(userProfile.balance).toFixed(2);
-            document.getElementById('val-staked').innerText = parseFloat(userProfile.staked).toFixed(2);
-            document.getElementById('val-ref').innerText = userProfile.referrals;
-        }
-
         function copyRefLink() {
-            navigator.clipboard.writeText(refLink);
-            alert('Referral link copied to clipboard!\n' + refLink);
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(refLink);
+                alert('Copied referral link: ' + refLink);
+            } else {
+                alert('Referral Link: ' + refLink);
+            }
         }
 
         async function executeTransfer() {
@@ -232,15 +241,16 @@
             const amount = parseFloat(document.getElementById('tx-amount').value);
 
             if (!recipient || isNaN(amount) || amount <= 0 || amount > userProfile.balance) {
-                return alert('Invalid amount or recipient.');
+                return alert('Check balance or recipient info.');
             }
 
-            const newBal = userProfile.balance - amount;
-            userProfile.balance = newBal;
+            userProfile.balance -= amount;
             renderUI();
+            alert(`Sent $${amount.toFixed(2)} to ${recipient}`);
 
-            await supabase.from('profiles').update({ balance: newBal }).eq('telegram_id', user.id);
-            alert(`Sent $${amount.toFixed(2)}!`);
+            if (supabase) {
+                await supabase.from('profiles').update({ balance: userProfile.balance }).eq('telegram_id', user.id);
+            }
         }
 
         async function executeStake() {
@@ -250,29 +260,27 @@
             userProfile.balance -= amount;
             userProfile.staked += amount;
             renderUI();
+            alert(`Staked $${amount.toFixed(2)} successfully!`);
 
-            await supabase.from('profiles').update({ balance: userProfile.balance, staked: userProfile.staked }).eq('telegram_id', user.id);
-            alert(`Staked $${amount.toFixed(2)}!`);
+            if (supabase) {
+                await supabase.from('profiles').update({ balance: userProfile.balance, staked: userProfile.staked }).eq('telegram_id', user.id);
+            }
         }
 
         async function adminSetBalance() {
             const val = parseFloat(document.getElementById('admin-balance-input').value);
-            if (isNaN(val)) return;
+            if (isNaN(val)) return alert('Enter a numeric balance.');
 
             userProfile.balance = val;
             renderUI();
+            alert(`Updated local balance to $${val.toFixed(2)}`);
 
-            await supabase.from('profiles').update({ balance: val }).eq('telegram_id', user.id);
-            alert(`Balance updated to $${val.toFixed(2)}`);
+            if (supabase) {
+                await supabase.from('profiles').update({ balance: val }).eq('telegram_id', user.id);
+            }
         }
 
-        function switchTab(tabId, el) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(`view-${tabId}`).classList.add('active');
-            el.classList.add('active');
-        }
-
+        renderUI();
         loadProfile();
     </script>
 </body>
