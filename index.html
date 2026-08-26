@@ -69,8 +69,8 @@
     <div id="view-dashboard" class="view active">
         <div class="balance-card">
             <div style="font-size: 0.85rem; opacity: 0.9;">Main Balance</div>
-            <div class="balance-amount">$<span id="val-balance">250.00</span></div>
-            <div class="status-sync" id="sync-status">⚡ Local Ready</div>
+            <div class="balance-amount">$<span id="val-balance">0.00</span></div>
+            <div class="status-sync" id="sync-status">⏳ Syncing...</div>
         </div>
 
         <div class="grid-2">
@@ -154,22 +154,28 @@
         const SUPABASE_URL = "https://kquqnxxkeagetpurvdqg.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_niFQUDkBDZj2fVZltQuzZQ_WuLhRcvu";
         let supabase = null;
-        
+
         try {
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } catch (e) {
-            console.log("Supabase initialization deferred:", e);
-        }
+        } catch(e) { console.error(e); }
 
-        const tg = window.Telegram?.WebApp;
-        if (tg) { try { tg.ready(); tg.expand(); } catch(e){} }
+        // Telegram Safe Init
+        let user = { id: 8472036561, first_name: "Ayalew", last_name: "Abebe" };
+        try {
+            const tg = window.Telegram?.WebApp;
+            if (tg) {
+                tg.ready();
+                tg.expand();
+                if (tg.initDataUnsafe?.user) {
+                    user = tg.initDataUnsafe.user;
+                }
+            }
+        } catch(e) {}
 
-        const user = tg?.initDataUnsafe?.user || { id: 8472036561, first_name: "Ayalew", last_name: "Abebe" };
         const ADMIN_IDS = [8472036561];
-
         let userProfile = { balance: 250.00, staked: 0.00, referrals: 0 };
 
-        // Set UI defaults immediately
+        // Populate User Info Immediately
         document.getElementById('u-name').innerText = `${user.first_name} ${user.last_name || ''}`;
         document.getElementById('u-id').innerText = `ID: ${user.id}`;
         document.getElementById('u-avatar').innerText = user.first_name ? user.first_name.charAt(0).toUpperCase() : 'U';
@@ -183,18 +189,14 @@
             document.getElementById('nav-admin-btn').style.display = 'flex';
         }
 
-        // Tab Switching Engine
         function switchTab(tabId) {
-            const views = document.querySelectorAll('.view');
-            const navItems = document.querySelectorAll('.nav-item');
-
-            views.forEach(v => v.classList.remove('active'));
-            navItems.forEach(n => n.classList.remove('active'));
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
             const targetView = document.getElementById(`view-${tabId}`);
             if (targetView) targetView.classList.add('active');
 
-            const activeBtn = Array.from(navItems).find(b => b.getAttribute('onclick')?.includes(`'${tabId}'`));
+            const activeBtn = Array.from(document.querySelectorAll('.nav-item')).find(b => b.getAttribute('onclick')?.includes(`'${tabId}'`));
             if (activeBtn) activeBtn.classList.add('active');
         }
 
@@ -205,8 +207,8 @@
         }
 
         async function loadProfile() {
+            renderUI();
             if (!supabase) return;
-            document.getElementById('sync-status').innerText = '⏳ Connecting...';
 
             try {
                 let { data, error } = await supabase
@@ -219,7 +221,21 @@
                     userProfile = data;
                     document.getElementById('sync-status').innerText = '☁️ Cloud Synced';
                 } else {
-                    document.getElementById('sync-status').innerText = '⚡ Local Active';
+                    const { data: newUser } = await supabase
+                        .from('profiles')
+                        .upsert([{
+                            telegram_id: user.id,
+                            first_name: user.first_name,
+                            last_name: user.last_name || '',
+                            balance: 250.00,
+                            staked: 0.00,
+                            referrals: 0
+                        }])
+                        .select()
+                        .single();
+
+                    if (newUser) userProfile = newUser;
+                    document.getElementById('sync-status').innerText = '☁️ Cloud Synced';
                 }
             } catch (err) {
                 document.getElementById('sync-status').innerText = '⚡ Offline Mode';
@@ -230,10 +246,8 @@
         function copyRefLink() {
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(refLink);
-                alert('Copied referral link: ' + refLink);
-            } else {
-                alert('Referral Link: ' + refLink);
             }
+            alert('Referral link copied:\n' + refLink);
         }
 
         async function executeTransfer() {
@@ -273,14 +287,13 @@
 
             userProfile.balance = val;
             renderUI();
-            alert(`Updated local balance to $${val.toFixed(2)}`);
+            alert(`Updated balance to $${val.toFixed(2)}`);
 
             if (supabase) {
                 await supabase.from('profiles').update({ balance: val }).eq('telegram_id', user.id);
             }
         }
 
-        renderUI();
         loadProfile();
     </script>
 </body>
