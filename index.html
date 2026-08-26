@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Troxus Platform - Supabase DB</title>
+    <title>Troxus Platform - Supabase Integrated</title>
     
     <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -16,6 +16,7 @@
             --bg: #090d16;
             --card: #131b2e;
             --accent: #0098ea;
+            --accent-hover: #0081c9;
             --text: #ffffff;
             --subtext: #8292aa;
             --border: #1e293b;
@@ -26,14 +27,17 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background: var(--bg); color: var(--text); padding-bottom: 80px; }
 
+        /* Header */
         .header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--card); border-bottom: 1px solid var(--border); }
         .user-box { display: flex; align-items: center; gap: 10px; }
         .avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: bold; display: flex; align-items: center; justify-content: center; }
         .admin-badge { font-size: 0.7rem; background: var(--red); color: white; padding: 2px 6px; border-radius: 4px; display: none; }
 
+        /* Navigation Views */
         .view { display: none; padding: 16px; flex-direction: column; gap: 14px; }
         .view.active { display: flex; }
 
+        /* Cards & Components */
         .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
         .balance-card { background: linear-gradient(135deg, #0098ea, #0052d4); color: white; text-align: center; padding: 20px; border-radius: 16px; }
         .balance-amount { font-size: 2.2rem; font-weight: 800; margin: 6px 0; }
@@ -41,16 +45,25 @@
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .stat-val { font-size: 1.1rem; font-weight: bold; color: var(--accent); margin-top: 4px; }
 
+        /* Inputs & Buttons */
         label { font-size: 0.8rem; color: var(--subtext); margin-bottom: 4px; display: block; }
         input, select { width: 100%; padding: 12px; background: #0b111e; border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 0.95rem; margin-bottom: 10px; outline: none; }
         button { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; }
+        button.danger { background: var(--red); }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
 
+        /* Bottom Navigation Bar */
         .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0; }
         .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; color: var(--subtext); cursor: pointer; background: none; border: none; width: auto; padding: 4px; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
-        
-        .status-sync { font-size: 0.75rem; color: var(--green); text-align: center; }
+
+        /* P2P Orders & Lists */
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .list-item:last-child { border-bottom: none; }
+        .tx-type { font-weight: bold; }
+        .tx-plus { color: var(--green); }
+        .tx-minus { color: var(--red); }
+        .status-sync { font-size: 0.75rem; color: #a5f3fc; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -60,7 +73,7 @@
         <div class="user-box">
             <div class="avatar" id="u-avatar">U</div>
             <div>
-                <div style="font-weight: bold; font-size: 0.95rem;" id="u-name">Syncing with Cloud...</div>
+                <div style="font-weight: bold; font-size: 0.95rem;" id="u-name">Syncing Cloud...</div>
                 <div style="font-size: 0.75rem; color: var(--subtext);" id="u-id">ID: ---</div>
             </div>
         </div>
@@ -87,32 +100,99 @@
         </div>
 
         <div class="card">
-            <h4 style="margin-bottom: 10px;">💸 Fast Transfer</h4>
+            <h4 style="margin-bottom: 10px;">💸 Transfer Funds</h4>
+            <label>Recipient Account ID / Username</label>
+            <input type="text" id="tx-recipient" placeholder="e.g. 8472036561 or @username">
             <label>Amount ($)</label>
             <input type="number" id="tx-amount" placeholder="0.00">
             <button id="btn-transfer" onclick="executeTransfer()">Send Funds</button>
         </div>
     </div>
 
-    <!-- VIEW 2: STAKING -->
+    <!-- VIEW 2: STAKING VAULT -->
     <div id="view-staking" class="view">
         <div class="card">
-            <h3>📈 Fixed Staking Vault</h3>
-            <label style="margin-top: 10px;">Amount to Stake ($)</label>
+            <h3>📈 Fixed Yield Staking</h3>
+            <p style="font-size: 0.8rem; color: var(--subtext); margin: 6px 0 14px 0;">Lock funds to earn daily compounding yields.</p>
+            
+            <label>Amount to Stake ($)</label>
             <input type="number" id="stake-amount" placeholder="0.00">
-            <button id="btn-stake" onclick="executeStake()">Stake Tokens</button>
+
+            <label>Select Lock Period</label>
+            <select id="stake-period">
+                <option value="30|5">30 Days (5% APY)</option>
+                <option value="90|12">90 Days (12% APY)</option>
+                <option value="180|25">180 Days (25% APY)</option>
+            </select>
+
+            <button id="btn-stake" onclick="executeStake()">Confirm Staking</button>
+        </div>
+
+        <div class="card">
+            <h4>Active Staking Contracts</h4>
+            <div id="active-stakes-list" style="margin-top: 10px;"></div>
         </div>
     </div>
 
-    <!-- Navigation Bar -->
+    <!-- VIEW 3: P2P MARKETPLACE -->
+    <div id="view-p2p" class="view">
+        <div class="card">
+            <h3>🛒 P2P Trading Desk</h3>
+            <p style="font-size: 0.8rem; color: var(--subtext); margin-top: 4px;">Buy or sell tokens using local payment channels.</p>
+        </div>
+
+        <div class="card">
+            <h4>Open Orders</h4>
+            <div class="list-item">
+                <div>
+                    <div><strong>Sell TRX</strong> (Merchant: Alex)</div>
+                    <div style="color: var(--subtext); font-size: 0.75rem;">Limit: $10 - $500</div>
+                </div>
+                <button style="width: auto; padding: 6px 12px;" onclick="alert('P2P order created. Awaiting merchant release.')">Buy TRX</button>
+            </div>
+            <div class="list-item">
+                <div>
+                    <div><strong>Buy TRX</strong> (Merchant: Sarah)</div>
+                    <div style="color: var(--subtext); font-size: 0.75rem;">Limit: $50 - $1,000</div>
+                </div>
+                <button style="width: auto; padding: 6px 12px; background: var(--green);" onclick="alert('Sell request sent to Escrow.')">Sell TRX</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 4: HISTORY -->
+    <div id="view-history" class="view">
+        <div class="card">
+            <h3>📊 Transaction History</h3>
+            <div id="history-list" style="margin-top: 10px;"></div>
+        </div>
+    </div>
+
+    <!-- VIEW 5: ADMIN PANEL (Protected) -->
+    <div id="view-admin" class="view">
+        <div class="card">
+            <h3 style="color: var(--red);">⚙️ Super Admin Controls</h3>
+            <p style="font-size: 0.8rem; color: var(--subtext); margin-bottom: 12px;">Modify user system records directly in Supabase.</p>
+            
+            <label>Inject Balance ($)</label>
+            <input type="number" id="admin-balance-input" placeholder="Set custom balance">
+            <button class="danger" id="btn-admin" onclick="adminSetBalance()">Update User Balance</button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
     <div class="nav-bar">
         <button class="nav-item active" onclick="switchTab('dashboard', this)">🏠<span>Dashboard</span></button>
         <button class="nav-item" onclick="switchTab('staking', this)">📈<span>Staking</span></button>
+        <button class="nav-item" onclick="switchTab('p2p', this)">🛒<span>P2P</span></button>
+        <button class="nav-item" onclick="switchTab('history', this)">📊<span>History</span></button>
+        <button class="nav-item" id="nav-admin-btn" style="display:none;" onclick="switchTab('admin', this)">⚙️<span>Admin</span></button>
     </div>
 
+    <!-- APP ENGINE SCRIPT -->
     <script>
         // -------------------------------------------------------------
-        // 1. SUPABASE CONFIGURATION (CONFIGURED FOR YOUR PROJECT)
+        // 1. SUPABASE CONFIGURATION
         // -------------------------------------------------------------
         const SUPABASE_URL = "https://kquqnxxkeagetpurvdqg.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_niFQUDkBDZj2fVZltQuzZQ_WuLhRcvu";
@@ -123,69 +203,113 @@
         if (tg) { tg.ready(); tg.expand(); }
 
         const user = tg?.initDataUnsafe?.user || { id: 8472036561, first_name: "Ayalew", last_name: "Abebe" };
-        let currentUserProfile = null;
+        const ADMIN_IDS = [8472036561]; 
+
+        let userProfile = null;
+        let stakesList = [];
+        let historyList = [];
 
         document.getElementById('u-name').innerText = `${user.first_name} ${user.last_name || ''}`;
         document.getElementById('u-id').innerText = `ID: ${user.id}`;
         document.getElementById('u-avatar').innerText = user.first_name.charAt(0).toUpperCase();
 
+        if (ADMIN_IDS.includes(user.id)) {
+            document.getElementById('admin-indicator').style.display = 'inline-block';
+            document.getElementById('nav-admin-btn').style.display = 'flex';
+        }
+
         // -------------------------------------------------------------
-        // 2. SUPABASE DB LOGIC (Fetch or Create User Record)
+        // 2. LOAD & INITIALIZE PROFILE FROM SUPABASE
         // -------------------------------------------------------------
-        async function loadUserProfile() {
-            document.getElementById('sync-status').innerText = '⏳ Syncing with cloud...';
-            
-            // Try fetching user record from Supabase
+        async function loadProfile() {
+            document.getElementById('sync-status').innerText = '⏳ Syncing cloud...';
+
             let { data, error } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('telegram_id', user.id)
                 .single();
 
-            // If user does not exist yet, create a new row in Supabase
             if (error || !data) {
-                const { data: newUser, error: createError } = await supabase
+                const { data: newUser, error: createErr } = await supabase
                     .from('profiles')
-                    .insert([{ 
-                        telegram_id: user.id, 
-                        first_name: user.first_name, 
-                        last_name: user.last_name || '', 
-                        balance: 250.00, 
-                        staked: 0.00, 
-                        referrals: 0 
+                    .insert([{
+                        telegram_id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name || '',
+                        balance: 250.00,
+                        staked: 0.00,
+                        referrals: 5
                     }])
                     .select()
                     .single();
 
-                if (createError) {
-                    alert('Supabase connection error: Check table setup.');
+                if (createErr) {
+                    alert('Supabase error: Ensure table creation SQL was executed.');
                     return;
                 }
                 data = newUser;
             }
 
-            currentUserProfile = data;
-            renderUI();
+            userProfile = data;
             document.getElementById('sync-status').innerText = '☁️ Cloud Synced';
+            renderUI();
         }
 
         function renderUI() {
-            if (!currentUserProfile) return;
-            document.getElementById('val-balance').innerText = parseFloat(currentUserProfile.balance).toFixed(2);
-            document.getElementById('val-staked').innerText = parseFloat(currentUserProfile.staked).toFixed(2);
-            document.getElementById('val-ref').innerText = currentUserProfile.referrals;
+            if (!userProfile) return;
+
+            document.getElementById('val-balance').innerText = parseFloat(userProfile.balance).toFixed(2);
+            document.getElementById('val-staked').innerText = parseFloat(userProfile.staked).toFixed(2);
+            document.getElementById('val-ref').innerText = userProfile.referrals;
+
+            // Render Active Stakes
+            const stakesContainer = document.getElementById('active-stakes-list');
+            if (stakesList.length === 0) {
+                stakesContainer.innerHTML = '<div style="font-size:0.8rem; color:var(--subtext);">No active staking contracts.</div>';
+            } else {
+                stakesContainer.innerHTML = stakesList.map(s => `
+                    <div class="list-item">
+                        <div>
+                            <div><strong>$${s.amount.toFixed(2)}</strong> (${s.yield}% APY)</div>
+                            <div style="font-size:0.75rem; color:var(--subtext);">${s.days} Days Lock • Ends: ${s.endDate}</div>
+                        </div>
+                        <span style="color:var(--green); font-size:0.8rem;">Active</span>
+                    </div>
+                `).join('');
+            }
+
+            // Render History
+            const historyContainer = document.getElementById('history-list');
+            if (historyList.length === 0) {
+                historyContainer.innerHTML = '<div style="font-size:0.8rem; color:var(--subtext);">No transactions recorded.</div>';
+            } else {
+                historyContainer.innerHTML = historyList.map(h => `
+                    <div class="list-item">
+                        <div>
+                            <div class="tx-type">${h.type}</div>
+                            <div style="font-size:0.75rem; color:var(--subtext);">${h.detail}</div>
+                        </div>
+                        <div class="${h.amount >= 0 ? 'tx-plus' : 'tx-minus'}">
+                            ${h.amount >= 0 ? '+' : ''}$${Math.abs(h.amount).toFixed(2)}
+                        </div>
+                    </div>
+                `).join('');
+            }
         }
 
         // -------------------------------------------------------------
-        // 3. MUTATIONS (Update Supabase Database)
+        // 3. ACTIONS (TRANSFER, STAKE, ADMIN)
         // -------------------------------------------------------------
         async function executeTransfer() {
+            const recipient = document.getElementById('tx-recipient').value.trim();
             const amount = parseFloat(document.getElementById('tx-amount').value);
-            if (isNaN(amount) || amount <= 0) return alert('Enter a valid amount.');
-            if (amount > currentUserProfile.balance) return alert('Insufficient balance.');
 
-            const newBalance = currentUserProfile.balance - amount;
+            if (!recipient) return alert('Enter recipient ID or username.');
+            if (isNaN(amount) || amount <= 0) return alert('Enter a valid transfer amount.');
+            if (amount > userProfile.balance) return alert('Insufficient balance.');
 
+            const newBalance = userProfile.balance - amount;
             document.getElementById('btn-transfer').disabled = true;
 
             const { error } = await supabase
@@ -198,20 +322,24 @@
             if (error) {
                 alert('Transfer failed: ' + error.message);
             } else {
-                currentUserProfile.balance = newBalance;
+                userProfile.balance = newBalance;
+                historyList.unshift({ type: 'Transfer Sent', amount: -amount, detail: `To: ${recipient}` });
                 renderUI();
+                document.getElementById('tx-recipient').value = '';
                 document.getElementById('tx-amount').value = '';
-                alert(`Transferred $${amount.toFixed(2)} successfully!`);
+                alert(`Sent $${amount.toFixed(2)} to ${recipient}`);
             }
         }
 
         async function executeStake() {
             const amount = parseFloat(document.getElementById('stake-amount').value);
-            if (isNaN(amount) || amount <= 0) return alert('Enter a valid amount.');
-            if (amount > currentUserProfile.balance) return alert('Insufficient balance.');
+            const [days, yieldVal] = document.getElementById('stake-period').value.split('|');
 
-            const newBalance = currentUserProfile.balance - amount;
-            const newStaked = currentUserProfile.staked + amount;
+            if (isNaN(amount) || amount <= 0) return alert('Enter a valid staking amount.');
+            if (amount > userProfile.balance) return alert('Insufficient balance.');
+
+            const newBalance = userProfile.balance - amount;
+            const newStaked = userProfile.staked + amount;
 
             document.getElementById('btn-stake').disabled = true;
 
@@ -225,11 +353,47 @@
             if (error) {
                 alert('Staking failed: ' + error.message);
             } else {
-                currentUserProfile.balance = newBalance;
-                currentUserProfile.staked = newStaked;
+                userProfile.balance = newBalance;
+                userProfile.staked = newStaked;
+
+                const expiry = new Date();
+                expiry.setDate(expiry.getDate() + parseInt(days));
+
+                stakesList.push({
+                    amount: amount,
+                    days: days,
+                    yield: yieldVal,
+                    endDate: expiry.toLocaleDateString()
+                });
+                historyList.unshift({ type: 'Staking Locked', amount: -amount, detail: `${days} Days @ ${yieldVal}% APY` });
+
                 renderUI();
                 document.getElementById('stake-amount').value = '';
-                alert(`Staked $${amount.toFixed(2)} successfully!`);
+                alert(`Staked $${amount.toFixed(2)} for ${days} days!`);
+            }
+        }
+
+        async function adminSetBalance() {
+            const val = parseFloat(document.getElementById('admin-balance-input').value);
+            if (isNaN(val)) return alert('Enter a valid balance.');
+
+            document.getElementById('btn-admin').disabled = true;
+
+            const { error } = await supabase
+                .from('profiles')
+                .update({ balance: val })
+                .eq('telegram_id', user.id);
+
+            document.getElementById('btn-admin').disabled = false;
+
+            if (error) {
+                alert('Admin update failed: ' + error.message);
+            } else {
+                userProfile.balance = val;
+                historyList.unshift({ type: 'Admin Adjustment', amount: val, detail: 'Manual Override' });
+                renderUI();
+                document.getElementById('admin-balance-input').value = '';
+                alert(`Balance updated to $${val.toFixed(2)} in Supabase!`);
             }
         }
 
@@ -240,8 +404,8 @@
             el.classList.add('active');
         }
 
-        // Run Cloud Initialization on load
-        loadUserProfile();
+        // Initialize application load
+        loadProfile();
     </script>
 </body>
 </html>
